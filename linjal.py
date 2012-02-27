@@ -1,7 +1,7 @@
 import sys
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import (qApp, QApplication, QGraphicsScene, QGraphicsView,
-                         QPainterPath, QStyle)
+from PyQt4.QtGui import (qApp, QApplication, QGraphicsScene, QGraphicsView, QStyle)
+from shape import Shape
 
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 400
@@ -17,21 +17,13 @@ class Canvas(QGraphicsView):
     def __init__(self):
         self._scene = QGraphicsScene()
         QGraphicsView.__init__(self, self._scene)
-        self._path = None
-        
+        self._shape = Shape()
+
     def mousePressEvent(self, event):
         point = self.mapToScene(event.x(), event.y())
-        x, y = point.x(), point.y()
-
-        if self._path:
-            self._path.lineTo(x, y)
-        else:            
-            self._path = QPainterPath()
-            self._path.moveTo(x, y)
-
+        self._shape.append_point((point.x(), point.y()))
         self._scene.clear()
-        self._scene.addPath(self._path)
-
+        self._scene.addPath(self._shape.make_painter_path())
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
