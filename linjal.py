@@ -21,7 +21,7 @@ class Canvas(QGraphicsView):
 
     def mousePressEvent(self, event):
         point = self.mapToScene(event.x(), event.y())
-        self._shape.append_point((point.x(), point.y()))
+        self._shape.insert_point((point.x(), point.y()))
         self._scene.clear()
         self._scene.addPath(self._shape.make_painter_path())
 
