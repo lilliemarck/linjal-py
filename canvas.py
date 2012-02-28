@@ -1,4 +1,4 @@
-from PyQt4.QtGui import (QGraphicsScene, QGraphicsView)
+from PyQt4.QtGui import (QGraphicsScene, QGraphicsView, QPainter)
 from shape import Shape
 
 class MouseEvent:
@@ -13,6 +13,7 @@ class Canvas(QGraphicsView):
         QGraphicsView.__init__(self, self.scene)
         self.shape = Shape()
         self.use_tool(PenTool)
+        self.setMouseTracking(True)
 
     def use_tool(self, tool_class):
         """Instantiates tool_class and uses it as the current tool."""
@@ -37,11 +38,32 @@ class Canvas(QGraphicsView):
     def mouseReleaseEvent(self, event):
         self._call_tool('mouse_release_event', self._map_event(event))
 
+    def paintEvent(self, event):
+        QGraphicsView.paintEvent(self, event)
+        v = self.viewport()
+        self._call_tool('paint_event', v)
+
 
 class SelectTool:
     """Tool used for selecting points."""
     def __init__(self, canvas):
-        pass
+        self._canvas = canvas
+        self._index = None
+
+    def mouse_move_event(self, event):
+        shape = self._canvas.shape
+        if shape:
+            self._index = shape.nearest_point_index(event.point)
+        else:
+            self._index = None
+        self._canvas.update()
+
+    def paint_event(self, device):
+        if self._index != None:
+            point = self._canvas.shape[self._index]
+            point = self._canvas.mapFromScene(point[0], point[1])
+            painter = QPainter(device)
+            painter.drawArc(point.x() - 1, point.y() - 1, 3, 3, 0, 5760)
 
 
 class PenTool:

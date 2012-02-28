@@ -57,12 +57,30 @@ def _insertion_index(points, point):
     return index
 
 
+def _nearest_point_index(points, point):
+    """Return the index of the point nearest to the given point."""
+    distance = sys.float_info.max
+    index = None
+    for i, p in enumerate(points):
+        temp = _vec_distance(p, point)
+        if temp < distance:
+            distance = temp
+            index = i
+    return index
+
+
 class Shape:
     """Represents a graphical shape."""
 
     def __init__(self):
         object.__init__(self)
         self._points = []
+
+    def __getitem__(self, index):
+        return self._points[index]
+
+    def __len__(self):
+        return len(self._points)
 
     def append_point(self, point):
         """Append a new point to the end of the shape."""
@@ -75,6 +93,10 @@ class Shape:
             points.append(point)
         else:
             points.insert(_insertion_index(points, point), point)
+
+    def nearest_point_index(self, point):
+        """Return the index of the point nearest to the given point."""
+        return _nearest_point_index(self._points, point)
 
     def make_painter_path(self):
         """Return a new QPainterPath used for drawing the shape."""
