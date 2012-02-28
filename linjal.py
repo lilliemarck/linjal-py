@@ -1,6 +1,7 @@
 import sys
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import (qApp, QApplication, QGraphicsScene, QGraphicsView, QStyle)
+from PyQt4.QtGui import (qApp, QAction, QActionGroup, QApplication,
+                         QGraphicsScene, QGraphicsView, QMainWindow, QStyle)
 from shape import Shape
 
 WINDOW_WIDTH = 640
@@ -25,13 +26,34 @@ class Canvas(QGraphicsView):
         self._scene.clear()
         self._scene.addPath(self._shape.make_painter_path())
 
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        QMainWindow.__init__(self)
+        self.setCentralWidget(Canvas())
+
+        select_action = QAction("Select", None)
+        select_action.setCheckable(True)
+        pen_action = QAction("Pen", None)
+        pen_action.setCheckable(True)
+        pen_action.setChecked(True)
+
+        self._tool_group = QActionGroup(None)
+        self._tool_group.addAction(select_action)
+        self._tool_group.addAction(pen_action)
+
+        toolbar = self.addToolBar("Tools")
+        toolbar.addAction(select_action)
+        toolbar.addAction(pen_action)
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    
-    canvas = Canvas()
-    canvas.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
-    center_widget_on_desktop(canvas)
-    canvas.show()
 
-    app.setActiveWindow(canvas) # Fixes some GC issue when closing the window
+    main_window = MainWindow()
+    main_window.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
+    center_widget_on_desktop(main_window)
+    main_window.show()
+
+    app.setActiveWindow(main_window) # Fixes some GC issue when closing the window
     app.exec_()
