@@ -1,8 +1,8 @@
 import sys
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import (qApp, QAction, QActionGroup, QApplication,
-                         QGraphicsScene, QGraphicsView, QMainWindow, QStyle)
-from shape import Shape
+                         QMainWindow, QStyle)
+from canvas import Canvas, PenTool, SelectTool
 
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 400
@@ -14,23 +14,11 @@ def center_widget_on_desktop(widget):
                                           qApp.desktop().availableGeometry()))
 
 
-class Canvas(QGraphicsView):
-    def __init__(self):
-        self._scene = QGraphicsScene()
-        QGraphicsView.__init__(self, self._scene)
-        self._shape = Shape()
-
-    def mousePressEvent(self, event):
-        point = self.mapToScene(event.x(), event.y())
-        self._shape.insert_point((point.x(), point.y()))
-        self._scene.clear()
-        self._scene.addPath(self._shape.make_painter_path())
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
-        self.setCentralWidget(Canvas())
+        self._canvas = Canvas()
+        self.setCentralWidget(self._canvas)
 
         select_action = QAction("Select", None)
         select_action.setCheckable(True)
@@ -42,9 +30,18 @@ class MainWindow(QMainWindow):
         self._tool_group.addAction(select_action)
         self._tool_group.addAction(pen_action)
 
+        select_action.triggered.connect(self._select_select_tool)
+        pen_action.triggered.connect(self._select_pen_tool)
+
         toolbar = self.addToolBar("Tools")
         toolbar.addAction(select_action)
         toolbar.addAction(pen_action)
+
+    def _select_select_tool(self):
+        self._canvas.use_tool(SelectTool)
+
+    def _select_pen_tool(self):
+        self._canvas.use_tool(PenTool)
 
 
 if __name__ == '__main__':
