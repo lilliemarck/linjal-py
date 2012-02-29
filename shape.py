@@ -79,6 +79,9 @@ class Shape:
     def __getitem__(self, index):
         return self._points[index]
 
+    def __delitem__(self, index):
+        del self._points[index]
+
     def __len__(self):
         return len(self._points)
 

@@ -12,12 +12,23 @@ class Canvas(QGraphicsView):
         self.scene = QGraphicsScene()
         QGraphicsView.__init__(self, self.scene)
         self.shape = Shape()
+        self.selection = None
         self.use_tool(PenTool)
         self.setMouseTracking(True)
 
     def use_tool(self, tool_class):
         """Instantiates tool_class and uses it as the current tool."""
         self._tool = tool_class(self)
+
+    def delete_selection(self):
+        if self.selection is not None:
+            del self.shape[self.selection]
+            self.selection = None
+            self.refresh_scene()
+
+    def refresh_scene(self):
+        self.scene.clear()
+        self.scene.addPath(self.shape.make_painter_path())
 
     def _call_tool(self, method_name, *args):
         method = getattr(self._tool, method_name, None)
@@ -48,20 +59,22 @@ class SelectTool:
     """Tool used for selecting points."""
     def __init__(self, canvas):
         self._canvas = canvas
-        self._index = None
 
     def mouse_move_event(self, event):
-        shape = self._canvas.shape
+        canvas = self._canvas
+        shape = canvas.shape
         if shape:
-            self._index = shape.nearest_point_index(event.point)
+            canvas.selection = shape.nearest_point_index(event.point)
         else:
-            self._index = None
-        self._canvas.update()
+            canvas.selection = None
+        canvas.update()
 
     def paint_event(self, device):
-        if self._index != None:
-            point = self._canvas.shape[self._index]
-            point = self._canvas.mapFromScene(point[0], point[1])
+        canvas = self._canvas
+        index = canvas.selection
+        if index != None:
+            point = canvas.shape[index]
+            point = canvas.mapFromScene(point[0], point[1])
             painter = QPainter(device)
             painter.drawArc(point.x() - 1, point.y() - 1, 3, 3, 0, 5760)
 
@@ -72,8 +85,6 @@ class PenTool:
         self._canvas = canvas
 
     def mouse_press_event(self, event):
-        shape = self._canvas.shape
-        scene = self._canvas.scene
-        shape.insert_point(event.point)
-        scene.clear()
-        scene.addPath(shape.make_painter_path())
+        canvas = self._canvas
+        canvas.shape.insert_point(event.point)
+        canvas.refresh_scene()

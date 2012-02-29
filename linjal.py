@@ -1,7 +1,7 @@
 import sys
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import (qApp, QAction, QActionGroup, QApplication,
-                         QMainWindow, QStyle)
+                         QKeySequence, QMainWindow, QStyle)
 from canvas import Canvas, PenTool, SelectTool
 
 WINDOW_WIDTH = 640
@@ -20,6 +20,8 @@ class MainWindow(QMainWindow):
         self._canvas = Canvas()
         self.setCentralWidget(self._canvas)
 
+        self.delete_action = QAction("Delete", None)
+        self.delete_action.setShortcuts(QKeySequence.Delete)
         select_action = QAction("Select", None)
         select_action.setCheckable(True)
         pen_action = QAction("Pen", None)
@@ -32,8 +34,10 @@ class MainWindow(QMainWindow):
 
         select_action.triggered.connect(self._select_select_tool)
         pen_action.triggered.connect(self._select_pen_tool)
+        self.delete_action.triggered.connect(self._delete)
 
         toolbar = self.addToolBar("Tools")
+        toolbar.addAction(self.delete_action)
         toolbar.addAction(select_action)
         toolbar.addAction(pen_action)
 
@@ -42,6 +46,9 @@ class MainWindow(QMainWindow):
 
     def _select_pen_tool(self):
         self._canvas.use_tool(PenTool)
+
+    def _delete(self):
+        self._canvas.delete_selection()
 
 
 if __name__ == '__main__':
