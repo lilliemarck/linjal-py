@@ -17,29 +17,34 @@ def center_widget_on_desktop(widget):
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
+        self._create_actions()
+        self._create_toolbar()
         self._canvas = Canvas()
         self.setCentralWidget(self._canvas)
 
-        self.delete_action = QAction("Delete", None)
-        self.delete_action.setShortcuts(QKeySequence.Delete)
-        select_action = QAction("Select", None)
-        select_action.setCheckable(True)
-        pen_action = QAction("Pen", None)
-        pen_action.setCheckable(True)
-        pen_action.setChecked(True)
+    def _create_actions(self):
+        self._delete_action = QAction("Delete", None)
+        self._delete_action.setShortcuts(QKeySequence.Delete)
+        self._delete_action.triggered.connect(self._delete)
+
+        self._select_action = QAction("Select", None)
+        self._select_action.setCheckable(True)
+        self._select_action.triggered.connect(self._select_select_tool)
+
+        self._pen_action = QAction("Pen", None)
+        self._pen_action.setCheckable(True)
+        self._pen_action.setChecked(True)
+        self._pen_action.triggered.connect(self._select_pen_tool)
 
         self._tool_group = QActionGroup(None)
-        self._tool_group.addAction(select_action)
-        self._tool_group.addAction(pen_action)
+        self._tool_group.addAction(self._select_action)
+        self._tool_group.addAction(self._pen_action)
 
-        select_action.triggered.connect(self._select_select_tool)
-        pen_action.triggered.connect(self._select_pen_tool)
-        self.delete_action.triggered.connect(self._delete)
-
+    def _create_toolbar(self):
         toolbar = self.addToolBar("Tools")
-        toolbar.addAction(self.delete_action)
-        toolbar.addAction(select_action)
-        toolbar.addAction(pen_action)
+        toolbar.addAction(self._delete_action)
+        toolbar.addAction(self._select_action)
+        toolbar.addAction(self._pen_action)
 
     def _select_select_tool(self):
         self._canvas.use_tool(SelectTool)
