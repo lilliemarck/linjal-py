@@ -66,7 +66,7 @@ def _nearest_point_index(points, point):
         if temp < distance:
             distance = temp
             index = i
-    return index
+    return index, distance
 
 
 class Shape:
@@ -78,6 +78,9 @@ class Shape:
 
     def __getitem__(self, index):
         return self._points[index]
+
+    def __setitem__(self, index, point):
+        self._points[index] = point
 
     def __delitem__(self, index):
         del self._points[index]

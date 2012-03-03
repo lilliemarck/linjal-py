@@ -57,17 +57,42 @@ class Canvas(QGraphicsView):
 
 class SelectTool:
     """Tool used for selecting points."""
+
+    _IDLE_STATE = 0
+    _MOVE_STATE = 1
+    _KNOB_RADIUS = 2
+
     def __init__(self, canvas):
         self._canvas = canvas
+        self._state = SelectTool._IDLE_STATE
+        self._distance = None
 
     def mouse_move_event(self, event):
         canvas = self._canvas
         shape = canvas.shape
-        if shape:
-            canvas.selection = shape.nearest_point_index(event.point)
-        else:
-            canvas.selection = None
+
+        if self._state == SelectTool._IDLE_STATE:
+            if shape:
+                index, distance = shape.nearest_point_index(event.point)
+                self._distance = distance
+                canvas.selection = index
+            else:
+                self._distance = None
+                canvas.selection = None
+
+        elif self._state == SelectTool._MOVE_STATE and canvas.selection is not None:
+            shape[canvas.selection] = event.point
+            canvas.refresh_scene()
+
         canvas.update()
+
+    def mouse_press_event(self, event):
+        distance = self._distance
+        if distance is not None and distance <= SelectTool._KNOB_RADIUS:
+            self._state = SelectTool._MOVE_STATE
+
+    def mouse_release_event(self, event):
+        self._state = SelectTool._IDLE_STATE
 
     def paint_event(self, device):
         canvas = self._canvas
@@ -76,7 +101,12 @@ class SelectTool:
             point = canvas.shape[index]
             point = canvas.mapFromScene(point[0], point[1])
             painter = QPainter(device)
-            painter.drawArc(point.x() - 1, point.y() - 1, 3, 3, 0, 5760)
+            painter.drawArc(point.x() - SelectTool._KNOB_RADIUS,
+                            point.y() - SelectTool._KNOB_RADIUS,
+                            2 * SelectTool._KNOB_RADIUS,
+                            2 * SelectTool._KNOB_RADIUS,
+                            0,
+                            5760)
 
 
 class PenTool:
