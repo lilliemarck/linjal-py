@@ -13,8 +13,8 @@ class MouseEvent:
 
 class Canvas(QGraphicsView):
     def __init__(self):
-        self.scene = QGraphicsScene()
-        QGraphicsView.__init__(self, self.scene)
+        self._scene = QGraphicsScene()
+        QGraphicsView.__init__(self, self._scene)
         self.shape = Shape()
         self.selection = None
         self.use_tool(PenTool)
@@ -31,8 +31,8 @@ class Canvas(QGraphicsView):
             self.refresh_scene()
 
     def refresh_scene(self):
-        self.scene.clear()
-        self.scene.addPath(self.shape.make_painter_path())
+        self._scene.clear()
+        self._scene.addPath(self.shape.make_painter_path())
 
     def _call_tool(self, method_name, *args):
         method = getattr(self._tool, method_name, None)
