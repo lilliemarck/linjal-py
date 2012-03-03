@@ -20,6 +20,7 @@ class MainWindow(QMainWindow):
         self._create_actions()
         self._create_toolbar()
         self._canvas = Canvas()
+        self._canvas.scale(16, 16)
         self.setCentralWidget(self._canvas)
 
     def _create_actions(self):

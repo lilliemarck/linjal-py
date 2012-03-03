@@ -1,6 +1,10 @@
 from PyQt4.QtGui import (QGraphicsScene, QGraphicsView, QPainter)
 from shape import Shape
 
+def _round_to_half(value):
+    return round(value * 2) // 2
+
+
 class MouseEvent:
     """A mouse event given in scene space."""
     def __init__(self, point):
@@ -38,7 +42,8 @@ class Canvas(QGraphicsView):
     def _map_event(self, qt_event):
         """Take a QMouseEvent and return a MouseEvent in scene space."""
         point = self.mapToScene(qt_event.x(), qt_event.y())
-        return MouseEvent((point.x(), point.y()))
+        return MouseEvent((_round_to_half(point.x()),
+                           _round_to_half(point.y())))
 
     def mouseMoveEvent(self, event):
         self._call_tool('mouse_move_event', self._map_event(event))
