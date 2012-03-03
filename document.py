@@ -1,6 +1,7 @@
 import math
 import sys
 from PyQt4.QtGui import QPainterPath
+from signals import Signal
 
 def _vec_add(lhs, rhs):
     return (lhs[0] + rhs[0], lhs[1] + rhs[1])
@@ -116,3 +117,26 @@ class Shape:
                 path.lineTo(point[0], point[1])
             path.closeSubpath()
         return path;
+
+
+class Document():
+
+    """Represents the state of the editor.
+    
+    This class was introduced so the editors state could be instantiated in
+    the unit tests without being dependent on ant Qt classes. There may still
+    be functions that use Qt functionality but that should not be a problem if
+    they are never called.    
+    
+    """
+
+    def __init__(self):
+        self.changed = Signal()
+        self.shape = Shape()
+        self.selection = None
+
+    def delete_selection(self):
+        if self.selection is not None:
+            del self.shape[self.selection]
+            self.selection = None
+            self.changed()

@@ -1,5 +1,5 @@
 import unittest
-from shape import Shape
+from document import Shape
 
 class Test(unittest.TestCase):
     def test_path_from_empty_shape(self):

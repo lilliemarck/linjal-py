@@ -1,5 +1,6 @@
 from PyQt4.QtGui import (QGraphicsScene, QGraphicsView, QPainter)
-from shape import Shape
+from document import Document
+from signals import Signal
 
 def _round_to_half(value):
     return round(value * 2) // 2
@@ -15,24 +16,25 @@ class Canvas(QGraphicsView):
     def __init__(self):
         self._scene = QGraphicsScene()
         QGraphicsView.__init__(self, self._scene)
-        self.shape = Shape()
-        self.selection = None
+        self._document = Document()
+        self._document.changed.connect(self._update_scene)
         self.use_tool(PenTool)
         self.setMouseTracking(True)
 
     def use_tool(self, tool_class):
         """Instantiates tool_class and uses it as the current tool."""
-        self._tool = tool_class(self)
+        self._tool = tool_class(self._document)
+        self._tool.needs_repaint.connect(self._update)
 
     def delete_selection(self):
-        if self.selection is not None:
-            del self.shape[self.selection]
-            self.selection = None
-            self.refresh_scene()
+        self._document.delete_selection()
 
-    def refresh_scene(self):
+    def _update(self):
+        self.update()
+
+    def _update_scene(self):
         self._scene.clear()
-        self._scene.addPath(self.shape.make_painter_path())
+        self._scene.addPath(self._document.shape.make_painter_path())
 
     def _call_tool(self, method_name, *args):
         method = getattr(self._tool, method_name, None)
@@ -56,40 +58,47 @@ class Canvas(QGraphicsView):
 
     def paintEvent(self, event):
         QGraphicsView.paintEvent(self, event)
-        v = self.viewport()
-        self._call_tool('paint_event', v)
+        self._call_tool('paint_event', self)
 
 
-class SelectTool:
+class Tool:
+    """Base class for tools."""
+
+    def __init__(self, document):
+        self.needs_repaint = Signal()
+        self.document = document
+
+
+class SelectTool(Tool):
     """Tool used for selecting points."""
 
     _IDLE_STATE = 0
     _MOVE_STATE = 1
     _KNOB_RADIUS = 2
 
-    def __init__(self, canvas):
-        self._canvas = canvas
+    def __init__(self, document):
+        Tool.__init__(self, document)
         self._state = SelectTool._IDLE_STATE
         self._distance = None
 
     def mouse_move_event(self, event):
-        canvas = self._canvas
-        shape = canvas.shape
+        document = self.document
+        shape = document.shape
 
         if self._state == SelectTool._IDLE_STATE:
             if shape:
                 index, distance = shape.nearest_point_index(event.point)
                 self._distance = distance
-                canvas.selection = index
+                document.selection = index
             else:
                 self._distance = None
-                canvas.selection = None
+                document.selection = None
 
-        elif self._state == SelectTool._MOVE_STATE and canvas.selection is not None:
-            shape[canvas.selection] = event.point
-            canvas.refresh_scene()
+        elif self._state == SelectTool._MOVE_STATE and document.selection is not None:
+            shape[document.selection] = event.point
+            document.changed()
 
-        canvas.update()
+        self.needs_repaint()
 
     def mouse_press_event(self, event):
         distance = self._distance
@@ -99,13 +108,13 @@ class SelectTool:
     def mouse_release_event(self, event):
         self._state = SelectTool._IDLE_STATE
 
-    def paint_event(self, device):
-        canvas = self._canvas
-        index = canvas.selection
+    def paint_event(self, canvas):
+        document = self.document
+        index = document.selection
         if index != None:
-            point = canvas.shape[index]
+            point = document.shape[index]
             point = canvas.mapFromScene(point[0], point[1])
-            painter = QPainter(device)
+            painter = QPainter(canvas.viewport())
             painter.drawArc(point.x() - SelectTool._KNOB_RADIUS,
                             point.y() - SelectTool._KNOB_RADIUS,
                             2 * SelectTool._KNOB_RADIUS,
@@ -114,12 +123,10 @@ class SelectTool:
                             5760)
 
 
-class PenTool:
+class PenTool(Tool):
     """Tool used for inserting points."""
-    def __init__(self, canvas):
-        self._canvas = canvas
 
     def mouse_press_event(self, event):
-        canvas = self._canvas
-        canvas.shape.insert_point(event.point)
-        canvas.refresh_scene()
+        document = self.document
+        document.shape.insert_point(event.point)
+        document.changed()
