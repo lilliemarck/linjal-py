@@ -79,7 +79,6 @@ class SelectTool(Tool):
     def __init__(self, document):
         Tool.__init__(self, document)
         self._state = SelectTool._IDLE_STATE
-        self._distance = None
 
     def mouse_move_event(self, event):
         document = self.document
@@ -87,11 +86,9 @@ class SelectTool(Tool):
 
         if self._state == SelectTool._IDLE_STATE:
             if shape:
-                index, distance = shape.nearest_point_index(event.point)
-                self._distance = distance
+                index, _ = shape.nearest_point_index(event.point)
                 document.selection = index
             else:
-                self._distance = None
                 document.selection = None
 
         elif self._state == SelectTool._MOVE_STATE and document.selection is not None:
@@ -101,9 +98,16 @@ class SelectTool(Tool):
         self.needs_repaint()
 
     def mouse_press_event(self, event):
-        distance = self._distance
-        if distance is not None and distance <= SelectTool._KNOB_RADIUS:
-            self._state = SelectTool._MOVE_STATE
+        document = self.document
+        shape = document.shape
+
+        if shape:
+            index, distance = shape.nearest_point_index(event.point)
+            if distance <= SelectTool._KNOB_RADIUS:
+                self._state = SelectTool._MOVE_STATE
+                document.selection = index
+            else:
+                document.selection = None
 
     def mouse_release_event(self, event):
         self._state = SelectTool._IDLE_STATE
