@@ -30,12 +30,12 @@ class MainWindow(QMainWindow):
 
         self._select_action = QAction("Select", None)
         self._select_action.setCheckable(True)
-        self._select_action.triggered.connect(self._select_select_tool)
+        self._select_action.triggered.connect(self._use_select_tool)
 
         self._pen_action = QAction("Pen", None)
         self._pen_action.setCheckable(True)
         self._pen_action.setChecked(True)
-        self._pen_action.triggered.connect(self._select_pen_tool)
+        self._pen_action.triggered.connect(self._use_pen_tool)
 
         self._new_shape_action = QAction("New Shape", None)
         self._new_shape_action.triggered.connect(self._new_shape)
@@ -51,10 +51,10 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self._pen_action)
         toolbar.addAction(self._new_shape_action)
 
-    def _select_select_tool(self):
+    def _use_select_tool(self):
         self._canvas.use_tool(SelectTool)
 
-    def _select_pen_tool(self):
+    def _use_pen_tool(self):
         self._canvas.use_tool(PenTool)
 
     def _new_shape(self):
