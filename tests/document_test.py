@@ -1,7 +1,7 @@
 import unittest
-from document import Shape
+from document import Document, Shape
 
-class Test(unittest.TestCase):
+class TestShape(unittest.TestCase):
     def test_path_from_empty_shape(self):
         shape = Shape()
         path = shape.make_painter_path()
@@ -67,6 +67,25 @@ class Test(unittest.TestCase):
         self.assertTrue(element.isLineTo())
         self.assertEquals(element.x, 10)
         self.assertEqual(element.y, 20)
+
+
+class TestDocument(unittest.TestCase):
+    def testNewDocuentHasNoShapes(self):
+        document = Document()
+        self.assertEqual(document.shape_count, 0)
+
+    def testNewShape(self):
+        document = Document()
+        shape = document.new_shape()
+        self.assertTrue(shape is not None)
+        self.assertEqual(document.shape_count, 1)
+
+    def testRedundantNewShapeCreatesOnlyOneShape(self):
+        document = Document()
+        document.new_shape()
+        document.new_shape()
+        self.assertEqual(document.shape_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

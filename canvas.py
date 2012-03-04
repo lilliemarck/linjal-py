@@ -26,15 +26,21 @@ class Canvas(QGraphicsView):
         self._tool = tool_class(self._document)
         self._tool.needs_repaint.connect(self._update)
 
+    def new_shape(self):
+        self._document.new_shape()
+
     def delete_selection(self):
         self._document.delete_selection()
+        if not self._document.current_shape:
+            self._document.delete_current_shape();
 
     def _update(self):
         self.update()
 
     def _update_scene(self):
         self._scene.clear()
-        self._scene.addPath(self._document.shape.make_painter_path())
+        for shape in self._document.shapes:
+            self._scene.addPath(shape.make_painter_path())
 
     def _call_tool(self, method_name, *args):
         method = getattr(self._tool, method_name, None)
@@ -80,24 +86,24 @@ class SelectTool(Tool):
 
     def mouse_move_event(self, event):
         document = self.document
-        shape = document.shape
+        shape = document.current_shape
 
-        if self._dragging and document.selection is not None:
-            shape[document.selection] = event.point
+        if self._dragging and document.selected_point_index is not None:
+            shape[document.selected_point_index] = event.point
             document.changed()
             self.needs_repaint()
 
     def mouse_press_event(self, event):
         document = self.document
-        shape = document.shape
+        shape = document.current_shape
 
         if shape:
             index, distance = shape.nearest_point_index(event.point)
             if distance <= SelectTool._KNOB_RADIUS:
                 self._dragging = True
-                document.selection = index
+                document.selected_point_index = index
             else:
-                document.selection = None
+                document.selected_point_index = None
             self.needs_repaint()
 
     def mouse_release_event(self, event):
@@ -105,9 +111,9 @@ class SelectTool(Tool):
 
     def paint_event(self, canvas):
         document = self.document
-        index = document.selection
+        index = document.selected_point_index
         if index != None:
-            point = document.shape[index]
+            point = document.current_shape[index]
             point = canvas.mapFromScene(point[0], point[1])
             painter = QPainter(canvas.viewport())
             painter.drawArc(point.x() - SelectTool._KNOB_RADIUS,
@@ -123,5 +129,6 @@ class PenTool(Tool):
 
     def mouse_press_event(self, event):
         document = self.document
-        document.shape.insert_point(event.point)
-        document.changed()
+        if document.current_shape is not None:
+            document.current_shape.insert_point(event.point)
+            document.changed()

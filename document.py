@@ -124,7 +124,7 @@ class Document():
     """Represents the state of the editor.
     
     This class was introduced so the editors state could be instantiated in
-    the unit tests without being dependent on ant Qt classes. There may still
+    the unit tests without being dependent on any Qt classes. There may still
     be functions that use Qt functionality but that should not be a problem if
     they are never called.    
     
@@ -132,11 +132,34 @@ class Document():
 
     def __init__(self):
         self.changed = Signal()
-        self.shape = Shape()
-        self.selection = None
+        self.shapes = []
+        self.current_shape = None
+        self.selected_point_index = None
+
+    @property
+    def shape_count(self):
+        return len(self.shapes)
+
+    def new_shape(self):
+        """Create and return a new shape."""
+        if self.current_shape is not None and not self.current_shape:
+            return self.current_shape
+        else:
+            shape = Shape()
+            self.shapes.append(shape)
+            self.current_shape = shape
+            return shape
+
+    def delete_current_shape(self):
+        """Delete the current shape and set it to None."""
+        print("deleting shape!")
+        self.shapes.remove(self.current_shape)
+        self.current_shape = None
+        self.changed()
 
     def delete_selection(self):
-        if self.selection is not None:
-            del self.shape[self.selection]
-            self.selection = None
+        """Deletes the selected point from the current shape."""
+        if self.selected_point_index is not None:
+            del self.current_shape[self.selected_point_index]
+            self.selected_point_index = None
             self.changed()
